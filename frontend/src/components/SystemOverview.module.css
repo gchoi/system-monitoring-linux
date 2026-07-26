@@ -1,0 +1,129 @@
+.overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .overview {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  transition: border-color 0.25s ease;
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tempBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent-orange);
+  background: rgba(255, 159, 67, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.cardValue {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.cardUnit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.progressTrack {
+  height: 5px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.15);
+}
+
+.cardMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.networkStats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.netRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.netLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  width: 22px;
+}
+
+.netValue {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}

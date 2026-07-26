@@ -1,0 +1,153 @@
+.detailCard {
+  padding: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
+
+.titleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 16px;
+}
+
+.deviceTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-bright);
+}
+
+.deviceUuid {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metricBlock {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--glass-border);
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s ease;
+}
+
+.metricBlock:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.metricHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metricTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+}
+
+.metricValue {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.metricUnit {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.progressContainer {
+  height: 6px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.barCyan {
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+}
+
+.barPurple {
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink));
+  box-shadow: 0 0 10px rgba(127, 0, 255, 0.2);
+}
+
+.barGreen {
+  background: linear-gradient(90deg, var(--accent-green), #00d2c4);
+  box-shadow: 0 0 10px rgba(0, 255, 135, 0.2);
+}
+
+.barOrange {
+  background: linear-gradient(90deg, var(--accent-orange), var(--accent-red));
+  box-shadow: 0 0 10px rgba(255, 159, 67, 0.2);
+}
+
+.subText {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-family: var(--font-mono);
+}

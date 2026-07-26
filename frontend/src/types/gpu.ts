@@ -1,0 +1,92 @@
+export interface GpuProcess {
+  pid: number;
+  name: string;
+  type: string;
+  used_memory: number; // MB
+}
+
+export interface GpuData {
+  index: number;
+  name: string;
+  uuid: string;
+  gpu_util: number;
+  mem_util: number;
+  mem_total: number;
+  mem_used: number;
+  mem_free: number;
+  temperature: number;
+  fan_speed: number;
+  power_draw: number;
+  power_limit: number;
+  processes: GpuProcess[];
+}
+
+export interface CpuData {
+  percent: number;
+  per_core: number[];
+  count_logical: number;
+  count_physical: number;
+  frequency_current: number;
+  frequency_max: number;
+  temperature: number | null;
+  load_avg: number[];
+}
+
+export interface MemoryData {
+  total: number;      // MB
+  used: number;       // MB
+  available: number;  // MB
+  percent: number;
+  swap_total: number; // MB
+  swap_used: number;  // MB
+  swap_percent: number;
+}
+
+export interface DiskPartition {
+  device: string;
+  mountpoint: string;
+  fstype: string;
+  total: number;   // MB
+  used: number;    // MB
+  free: number;    // MB
+  percent: number;
+}
+
+export interface DiskIo {
+  read_bytes: number;
+  write_bytes: number;
+  read_count: number;
+  write_count: number;
+}
+
+export interface DiskData {
+  partitions: DiskPartition[];
+  io: DiskIo;
+}
+
+export interface NetworkData {
+  bytes_sent: number;
+  bytes_recv: number;
+  packets_sent: number;
+  packets_recv: number;
+}
+
+export interface SystemData {
+  cpu: CpuData;
+  memory: MemoryData;
+  disk: DiskData;
+  network: NetworkData;
+  uptime: number;         // seconds
+  platform: string;
+  platform_release: string;
+  hostname: string;
+}
+
+export interface TelemetryData {
+  driver_version: string;
+  cuda_version: string;
+  gpus: GpuData[];
+  system: SystemData;
+  timestamp: number;
+  is_mock: boolean;
+}
