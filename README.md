@@ -3,7 +3,7 @@
 A sleek, modern, glassmorphic real-time system monitoring dashboard.
 Built with **Next.js (React/TypeScript)** for the frontend, **FastAPI (Python)** for the backend telemetry stream over WebSockets, and fully containerized with **Docker Compose**.
 
-![Dashboard Mockup](https://raw.githubusercontent.com/username/project/main/mockup.png) *(UI placeholder - renders rich neon gauges, rolling time-series area charts, and filterable GPU process tables)*
+![System Monitor Dashboard](./figures/screenshot.png)
 
 ---
 
@@ -37,12 +37,29 @@ docker compose up --build
 
 ---
 
+## Environment Variables
+
+All configuration lives in `.env` in the project root (copy the template with `cp .env.example .env` if it does not exist yet). Only `MOCK_GPU` matters for mock mode; the rest have sensible defaults.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `MOCK_GPU` | `false` | Set to `true` to force simulated GPU telemetry (no NVIDIA GPU required). |
+| `BACKEND_PORT` | `8000` | Host port exposed for the FastAPI backend. |
+| `FRONTEND_PORT` | `3000` | Host port exposed for the Next.js frontend. |
+| `NEXT_PUBLIC_WS_URL` | *(empty)* | WebSocket URL for telemetry. If empty, the frontend connects to the current browser host on port `8000`. Example: `ws://192.168.1.100:8000/ws`. |
+
+---
+
 ## Development / Running Without Nvidia GPUs (Mock Mode)
 
 If you are developing on a machine without an Nvidia GPU (such as a MacBook or laptop), follow these steps to run the interactive dashboard with simulated telemetry:
 
 ### 1. Update `.env`
-Set `MOCK_GPU` to `true`:
+If `.env` does not exist yet, copy the template first:
+```bash
+cp .env.example .env
+```
+Then set `MOCK_GPU` to `true`:
 ```ini
 MOCK_GPU=true
 ```
