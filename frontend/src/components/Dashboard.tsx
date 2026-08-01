@@ -9,7 +9,9 @@ import GpuCard from './GpuCard';
 import GpuDetailCard from './GpuDetailCard';
 import RealtimeChart from './RealtimeChart';
 import ProcessTable from './ProcessTable';
+import DeviceInfoPanel from './DeviceInfoPanel';
 import { TelemetryData } from '../types/gpu';
+import { DetectedGPU, DetectedOS, computeLabel, detectGPU, detectOS } from '../lib/deviceDetect';
 
 export interface HistoryItem {
   time: string;
@@ -22,6 +24,11 @@ export default function Dashboard() {
   const [selectedGpuIndex, setSelectedGpuIndex] = useState<number>(0);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('connecting');
   const [errorCount, setErrorCount] = useState<number>(0);
+
+  // Real host OS / GPU detected from the browser. The backend runs inside a
+  // Linux container, so it cannot report the actual host OS or GPU.
+  const [osInfo, setOsInfo] = useState<DetectedOS | null>(null);
+  const [gpuInfo, setGpuInfo] = useState<DetectedGPU | null>(null);
 
   // Rolling history for GPU
   const [gpuHistory, setGpuHistory] = useState<Record<number, HistoryItem[]>>({});
@@ -70,18 +77,22 @@ export default function Dashboard() {
           hour12: false,
         });
 
-        // Update GPU history for each GPU
+        // Update GPU history for each real NVIDIA GPU (mock devices are never rendered)
         setGpuHistory((prevHistory) => {
           const updated = { ...prevHistory };
-          data.gpus.forEach((gpu) => {
-            const currentHistory = updated[gpu.index] || [];
-            const newItem: HistoryItem = {
-              time: timeStr,
-              gpuUtil: gpu.gpu_util,
-              memUtil: gpu.mem_util,
-            };
-            updated[gpu.index] = [...currentHistory, newItem].slice(-30);
-          });
+          if (!data.is_mock) {
+            (data.devices || []).forEach((device) => {
+              (device.gpus || []).forEach((gpu) => {
+                const currentHistory = updated[gpu.index] || [];
+                const newItem: HistoryItem = {
+                  time: timeStr,
+                  gpuUtil: gpu.gpu_util,
+                  memUtil: gpu.mem_util,
+                };
+                updated[gpu.index] = [...currentHistory, newItem].slice(-30);
+              });
+            });
+          }
           return updated;
         });
 
@@ -124,12 +135,48 @@ export default function Dashboard() {
     };
   }, []);
 
+  // Detect the real host OS and GPU from the browser (see lib/deviceDetect).
+  useEffect(() => {
+    setOsInfo(detectOS());
+    let cancelled = false;
+    detectGPU().then((gpu) => {
+      if (!cancelled) setGpuInfo(gpu);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleRetry = () => {
     setErrorCount(0);
     connect();
   };
 
-  const activeGpu = telemetry?.gpus.find((g) => g.index === selectedGpuIndex) || telemetry?.gpus[0];
+  // Real devices reported by the backend. Simulated (mock) devices are never
+  // rendered: the UI only ever shows real, detected hardware.
+  const backendDevices = telemetry && !telemetry.is_mock ? telemetry.devices || [] : [];
+  const nvidiaDevice = backendDevices.find((d) => d.type === 'nvidia');
+  const nvidiaGpus = backendDevices
+    .filter((d) => d.gpus && d.gpus.length > 0)
+    .flatMap((d) => d.gpus!);
+  const basicDevices = backendDevices.filter((d) => !d.gpus || d.gpus.length === 0);
+
+  // Real host GPU detected from the browser (WebGPU/WebGL).
+  const hostDevice =
+    gpuInfo && gpuInfo.vendor !== 'software' && gpuInfo.vendor !== 'unknown'
+      ? {
+          type: gpuInfo.vendor,
+          vendor: gpuInfo.vendorLabel,
+          name: gpuInfo.model || gpuInfo.vendorLabel,
+          compute: computeLabel(gpuInfo.vendor),
+        }
+      : null;
+  const hostCovered = !!hostDevice && backendDevices.some((d) => d.type === hostDevice.type);
+  const deviceCount =
+    (nvidiaGpus.length > 0 ? 1 : 0) + basicDevices.length + (hostDevice && !hostCovered ? 1 : 0);
+  const showGpuSection = deviceCount > 0;
+
+  const activeGpu = nvidiaGpus.find((g) => g.index === selectedGpuIndex) || nvidiaGpus[0];
   const activeHistory = activeGpu ? gpuHistory[activeGpu.index] || [] : [];
 
   const formatUptime = (seconds: number) => {
@@ -168,21 +215,34 @@ export default function Dashboard() {
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Platform</span>
-                <span className={styles.infoValueMono}>{telemetry.system.platform}</span>
+                <span
+                  className={styles.infoValueMono}
+                  title={osInfo?.detail ? `Version ${osInfo.detail}` : undefined}
+                >
+                  {osInfo?.name || 'Detecting…'}
+                </span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Uptime</span>
                 <span className={styles.infoValueMono}>{formatUptime(telemetry.system.uptime)}</span>
               </div>
-              {telemetry.driver_version !== 'N/A' && (
+              {hostDevice && (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>GPU</span>
+                  <span className={styles.infoValueMono} title={gpuInfo?.renderer}>
+                    {hostDevice.name}
+                  </span>
+                </div>
+              )}
+              {!telemetry.is_mock && nvidiaDevice?.driver_version && nvidiaDevice.driver_version !== 'N/A' && (
                 <>
                   <div className={styles.infoItem}>
                     <span className={styles.infoLabel}>Driver</span>
-                    <span className={styles.infoValueMono}>{telemetry.driver_version}</span>
+                    <span className={styles.infoValueMono}>{nvidiaDevice.driver_version}</span>
                   </div>
                   <div className={styles.infoItem}>
                     <span className={styles.infoLabel}>CUDA</span>
-                    <span className={styles.infoValueMono}>{telemetry.cuda_version}</span>
+                    <span className={styles.infoValueMono}>{nvidiaDevice.cuda_version}</span>
                   </div>
                 </>
               )}
@@ -231,45 +291,60 @@ export default function Dashboard() {
             <SystemCharts cpuHistory={systemHistory} memoryHistory={systemHistory} />
           </section>
 
-          {/* GPU Section */}
-          <section>
-            <h2 className={styles.sectionTitle}>
-              <Layers size={14} /> GPU Devices ({telemetry.gpus.length})
-            </h2>
-            <div className={styles.grid}>
-              {/* Sidebar - GPU List */}
-              <aside className={styles.sidebar}>
-                <div className={styles.gpuList}>
-                  {telemetry.gpus.map((gpu) => (
-                    <GpuCard
-                      key={gpu.uuid}
-                      gpu={gpu}
-                      isActive={activeGpu?.index === gpu.index}
-                      onClick={() => setSelectedGpuIndex(gpu.index)}
-                    />
-                  ))}
-                </div>
-              </aside>
+          {/* GPU Section — only real, detected devices are rendered. */}
+          {showGpuSection && (
+            <section>
+              <h2 className={styles.sectionTitle}>
+                <Layers size={14} /> GPU Devices ({deviceCount})
+                {telemetry.is_mock && <span className={styles.badge}>MOCK DATA</span>}
+              </h2>
 
-              {/* Main Content Areas */}
-              {activeGpu && (
-                <div className={styles.mainContent}>
-                  <GpuDetailCard gpu={activeGpu} />
+              {/* Devices without live telemetry (Apple/AMD/Intel/... from backend) */}
+              {basicDevices.map((d) => (
+                <DeviceInfoPanel key={`${d.type}-${d.name}`} device={d} />
+              ))}
 
-                  <div className={styles.chartsGrid}>
-                    <RealtimeChart history={activeHistory} gpuName={activeGpu.name} />
-                  </div>
+              {/* Browser-detected host device, when not already covered above */}
+              {hostDevice && !hostCovered && <DeviceInfoPanel device={hostDevice} />}
 
-                  <div>
-                    <h2 className={styles.sectionTitle} style={{ marginBottom: '12px' }}>
-                      <Terminal size={14} /> Running Processes ({activeGpu.processes.length})
-                    </h2>
-                    <ProcessTable processes={activeGpu.processes} />
-                  </div>
+              {/* NVIDIA live telemetry (NVML) */}
+              {nvidiaGpus.length > 0 && (
+                <div className={styles.grid}>
+                  {/* Sidebar - GPU List */}
+                  <aside className={styles.sidebar}>
+                    <div className={styles.gpuList}>
+                      {nvidiaGpus.map((gpu) => (
+                        <GpuCard
+                          key={gpu.uuid}
+                          gpu={gpu}
+                          isActive={activeGpu?.index === gpu.index}
+                          onClick={() => setSelectedGpuIndex(gpu.index)}
+                        />
+                      ))}
+                    </div>
+                  </aside>
+
+                  {/* Main Content Areas */}
+                  {activeGpu && (
+                    <div className={styles.mainContent}>
+                      <GpuDetailCard gpu={activeGpu} />
+
+                      <div className={styles.chartsGrid}>
+                        <RealtimeChart history={activeHistory} gpuName={activeGpu.name} />
+                      </div>
+
+                      <div>
+                        <h2 className={styles.sectionTitle} style={{ marginBottom: '12px' }}>
+                          <Terminal size={14} /> Running Processes ({activeGpu.processes.length})
+                        </h2>
+                        <ProcessTable processes={activeGpu.processes} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          </section>
+            </section>
+          )}
         </>
       )}
     </div>

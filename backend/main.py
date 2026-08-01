@@ -31,6 +31,7 @@ def health_check():
     return {
         "status": "healthy",
         "mock_mode": gpu_monitor.mock_mode,
+        "device_count": gpu_monitor.device_count(),
         "driver_version": gpu_monitor.driver_version,
         "cuda_version": gpu_monitor.cuda_version,
         "platform": system_monitor.platform_name,

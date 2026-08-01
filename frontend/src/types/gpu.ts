@@ -82,10 +82,39 @@ export interface SystemData {
   hostname: string;
 }
 
+export interface GpuDeviceStats {
+  /** GPU utilization percent (Apple IORegistry). */
+  gpu_util?: number;
+  /** GPU memory in use, bytes. */
+  vram_used_bytes?: number;
+  /** GPU memory allocated by the driver, bytes. */
+  vram_allocated_bytes?: number;
+  temperature?: number | null;
+  fan_speed?: number | null;
+}
+
+export interface GpuDevice {
+  /** Device type: nvidia | apple | amd | intel | qualcomm | unknown. */
+  type: string;
+  vendor: string;
+  name: string;
+  /** Compute backend label, e.g. 'CUDA' or 'MPS (Metal Performance Shaders)'. */
+  compute?: string;
+  vram_mb?: number;
+  /** GPU core count (Apple Silicon). */
+  cores?: number;
+  /** Metal support version, e.g. 'Metal 4' (Apple). */
+  metal?: string;
+  driver_version?: string;
+  cuda_version?: string;
+  /** Live telemetry per GPU (NVIDIA only, when the container can see the GPU). */
+  gpus?: GpuData[];
+  /** Live stats for devices that expose them (Apple via IORegistry). */
+  stats?: GpuDeviceStats;
+}
+
 export interface TelemetryData {
-  driver_version: string;
-  cuda_version: string;
-  gpus: GpuData[];
+  devices: GpuDevice[];
   system: SystemData;
   timestamp: number;
   is_mock: boolean;
